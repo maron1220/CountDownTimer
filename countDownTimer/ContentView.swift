@@ -8,7 +8,7 @@
 import SwiftUI
 import AudioToolbox
 import GoogleMobileAds
-
+import UserNotifications
 
 
 struct ContentView: View {
@@ -32,7 +32,12 @@ struct ContentView: View {
                     .padding(.bottom)
             }//VStack
     }//ZStack
-       
+        .onAppear(perform: {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.badge,.sound,.alert]){(_,_) in
+            }
+        }
+        
+        )//onApper
         //onRecieveでtimerの発動を受け取る。ZStackの一番外側に配置することでview全体に適応させる。
         .onReceive(self.timeManager.timer){ _ in
             
@@ -40,8 +45,8 @@ struct ContentView: View {
             guard self.timeManager.timerStatus == .running else {return}
             
             if self.timeManager.duration > 0{
-            //残り時間から0.05引く
-                self.timeManager.duration -= 0.05
+            //残り時間から0.5引く
+                self.timeManager.duration -= 0.5
             }//if
             else {
                 self.timeManager.timerStatus = .stopped
@@ -60,12 +65,29 @@ struct ContentView: View {
             
             guard self.timeManager.timerStatus == .stopped && self.showingAlert == true else{return}
             
+            //通知を発火
+            self.Notify()
             //バイブレーション
             AudioServicesPlayAlertSoundWithCompletion(SystemSoundID(kSystemSoundID_Vibrate)){
             }
             
         }
     }//View
+    
+    //通知を監視
+    func Notify(){
+        
+        let content = UNMutableNotificationContent()
+        content.title = "通知"
+        content.body = "時間です。"
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        
+        let req = UNNotificationRequest(identifier: "MSG", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(req, withCompletionHandler: nil)
+    }
+    
 }
 
 struct ContentView_Previews: PreviewProvider {
